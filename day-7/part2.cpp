@@ -1,8 +1,10 @@
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <utility>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 using namespace std;
 
@@ -47,77 +49,221 @@ int main()
 
     cout << "S : x " << s_index.second << " y " << s_index.first << endl;
 
-    vector<pair<size_t, size_t>> beams;
-    vector<vector<pair<size_t, size_t>>> all_beams;
+    // vector<pair<size_t, size_t>> beams;
+    // vector<vector<pair<size_t, size_t>>> all_beams;
+    // vector<pair<size_t, size_t>> descisions;
+    //
+    // pair<size_t, size_t> first_beam(s_index.first + 1, s_index.second);
+    // beams.push_back(first_beam);
+    // all_beams.push_back(beams);
+    //
+    // while (beams.at(0).first + 1 < lines.size())
+    // {
+    //     vector<pair<size_t, size_t>> next_beams;
+    //     for (auto beam : beams)
+    //     {
+    //         char empty_or_split = lines.at(beam.first + 1).at(beam.second);
+    //         if (empty_or_split == '^')
+    //         {
+    //             // result++;
+    //             auto next_beam_left  = beam;
+    //             auto next_beam_right = beam;
+    //             next_beam_left.first += 2;
+    //             next_beam_right.first += 2;
+    //             --next_beam_left.second;
+    //             ++next_beam_right.second;
+    //             if (next_beams.empty())
+    //             {
+    //                 next_beams.push_back(next_beam_left);
+    //             }
+    //             else if (next_beams.back().second != next_beam_left.second)
+    //             {
+    //                 next_beams.push_back(next_beam_left);
+    //             }
+    //             next_beams.push_back(next_beam_right);
+    //         }
+    //         else
+    //         {
+    //             auto next_beam = beam;
+    //             next_beam.first += 2;
+    //             if (next_beams.empty())
+    //             {
+    //                 next_beams.push_back(next_beam);
+    //             }
+    //             else if (next_beams.back().second != next_beam.second)
+    //             {
+    //                 next_beams.push_back(next_beam);
+    //             }
+    //         }
+    //     }
+    //     beams = next_beams;
+    //     all_beams.push_back(beams);
+    // }
+    //
+    // // Draw beams
+    // for (auto beamss : all_beams)
+    // {
+    //     for (auto beam : beamss)
+    //     {
+    //         lines.at(beam.first).at(beam.second)     = '|';
+    //         lines.at(beam.first - 1).at(beam.second) = '|';
+    //     }
+    // }
+    // float test = 0;
+    // for (auto line : lines)
+    // {
+    //     test += 0.5;
+    //     cout << (int)test << "  ";
+    //     cout << line << endl;
+    // }
+
+    pair<size_t, size_t> cursor;
+    vector<pair<size_t, size_t>> decisions;
+    vector<pair<size_t, size_t>> path;
 
     pair<size_t, size_t> first_beam(s_index.first + 1, s_index.second);
-    beams.push_back(first_beam);
-    all_beams.push_back(beams);
-    int64_t result = 0;
+    // decisions.push_back(first_beam);
+    cursor          = first_beam;
+    bool popped     = false;
+    uint64_t result = 0;
 
-    while (beams.at(0).first + 1 < lines.size())
+    while (true)
     {
-        vector<pair<size_t, size_t>> next_beams;
-        for (auto beam : beams)
+        if (cursor.first + 1 >= lines.size())
         {
-            char empty_or_split = lines.at(beam.first + 1).at(beam.second);
-            if (empty_or_split == '^')
+            std::cout << "End reached\n";
+
+            result++;
+            if (decisions.empty())
             {
-                result++;
-                auto next_beam_left  = beam;
-                auto next_beam_right = beam;
-                next_beam_left.first += 2;
-                next_beam_right.first += 2;
-                --next_beam_left.second;
-                ++next_beam_right.second;
-                if (next_beams.empty())
-                {
-                    next_beams.push_back(next_beam_left);
-                }
-                else if (next_beams.back().second != next_beam_left.second)
-                {
-                    next_beams.push_back(next_beam_left);
-                }
-                next_beams.push_back(next_beam_right);
+                break;
             }
-            else
+            cursor = decisions.back();
+            decisions.pop_back();
+            while (path.back().first > cursor.first)
             {
-                auto next_beam = beam;
-                next_beam.first += 2;
-                if (next_beams.empty())
-                {
-                    next_beams.push_back(next_beam);
-                }
-                else if (next_beams.back().second != next_beam.second)
-                {
-                    next_beams.push_back(next_beam);
-                }
+                lines.at(path.back().first).at(path.back().second)     = '.';
+                lines.at(path.back().first - 1).at(path.back().second) = '.';
+                path.pop_back();
             }
+            continue;
         }
-        beams = next_beams;
-        all_beams.push_back(beams);
+
+        char empty_or_split = lines.at(cursor.first + 1).at(cursor.second);
+
+        if (empty_or_split == '^')
+        {
+
+            auto right = cursor;
+            right.first += 2;
+            ++right.second;
+
+            auto left = cursor;
+            left.first += 2;
+            --left.second;
+
+            decisions.push_back(right);
+
+            cursor = left;
+        }
+        else
+        {
+            cursor.first += 2;
+        }
+
+        path.push_back(cursor);
+
+        lines.at(cursor.first).at(cursor.second)     = '|';
+        lines.at(cursor.first - 1).at(cursor.second) = '|';
+        // do
+        // {
+        //     if ((cursor.first + 1) >= lines.size())
+        //     {
+        //         cout << "End reached" << endl;
+        //         // reached end
+        //         cursor = decisions.back();
+        //         decisions.pop_back();
+        //         popped = true;
+        //         result++;
+        //     }
+        //     char empty_or_split = lines.at(cursor.first + 1).at(cursor.second);
+        //     if (empty_or_split == '^')
+        //     {
+        //         // result++;
+        //         if (popped)
+        //         {
+        //             popped = false;
+        //             cursor.first += 2;
+        //             ++cursor.second;
+        //         }
+        //         else
+        //         {
+        //             decisions.push_back(cursor);
+        //             cursor.first += 2;
+        //             --cursor.second;
+        //         }
+        //     }
+        //     else
+        //     {
+        //         cursor.first += 2;
+        //     }
+        //     lines.at(cursor.first).at(cursor.second)     = '|';
+        //     lines.at(cursor.first - 1).at(cursor.second) = '|';
+
+        int test = 0;
+        for (auto line : lines)
+        {
+            cout << test++ << "  ";
+            cout << line << endl;
+        }
+        for (auto d : decisions)
+        {
+            cout << d.first;
+            cout << " | ";
+        }
+        cout << endl;
+        cout << cursor.first << endl;
+        usleep(500 * 1000);
     }
+    while (decisions.size() > 0)
+        ;
+    cout << result << endl;
 
     // Draw beams
-    for (auto beamss : all_beams)
-    {
-        for (auto beam : beamss)
-        {
-            lines.at(beam.first).at(beam.second)     = '|';
-            lines.at(beam.first - 1).at(beam.second) = '|';
-        }
-    }
-    cout << result << endl;
-    cout << result << endl;
+    // for (auto beamss : all_beams)
+    // {
+    //     for (auto beam : beamss)
+    //     {
+    //         lines.at(beam.first).at(beam.second)     = '|';
+    //         lines.at(beam.first - 1).at(beam.second) = '|';
+    //     }
+    // }
     float test = 0;
-    for (auto line : lines)
-    {
-        test += 0.5;
-        cout << (int)test << "  ";
-        cout << line << endl;
-    }
+    // for (auto line : lines)
+    // {
+    //     test += 0.5;
+    //     cout << (int)test << "  ";
+    //     cout << line << endl;
+    // }
+    // int64_t result  = 0;
+    // bool last       = false;
+    // auto last_beams = all_beams.back();
+    // for (auto beamss : all_beams)
+    // {
+    // }
+    // for (size_t i = all_beams.size() - 1; i >= 0; --i)
+    // {
+    //     auto& beam_row = all_beams.at(i);
+    // }
+    // for (last_beam : last_beams)
+    // {
+    //     for (size_t i = all_beams.size() - 2; i >= 0; --i)
+    //     {
+    //
+    //         if (last_beam.second.at(i).second
+    //     }
+    // }
 
-    for (auto beamss : all_beams)
-    {
-    }
+    // cout << result << endl;
+    // cout << result << endl;
 }
