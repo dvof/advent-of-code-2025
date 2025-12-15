@@ -11,7 +11,7 @@ using namespace std;
 int main()
 {
     cout << "Day 7 Part 1" << endl;
-    ifstream in("input-test.txt");
+    ifstream in("input.txt");
     if (!in)
     {
         cerr << "No input file found" << endl;
@@ -123,15 +123,16 @@ int main()
 
     pair<size_t, size_t> first_beam(s_index.first + 1, s_index.second);
     // decisions.push_back(first_beam);
-    cursor          = first_beam;
-    bool popped     = false;
-    uint64_t result = 0;
+    cursor                         = first_beam;
+    bool popped                    = false;
+    uint64_t result                = 0;
+    lines.at(1).at(s_index.second) = '|';
 
     while (true)
     {
         if (cursor.first + 1 >= lines.size())
         {
-            std::cout << "End reached\n";
+            // std::cout << "End reached\n";
 
             result++;
             if (decisions.empty())
@@ -140,20 +141,23 @@ int main()
             }
             cursor = decisions.back();
             decisions.pop_back();
+            popped = true;
+
+            // BEBUG INFO
             while (path.back().first > cursor.first)
             {
                 lines.at(path.back().first).at(path.back().second)     = '.';
                 lines.at(path.back().first - 1).at(path.back().second) = '.';
                 path.pop_back();
             }
-            continue;
+            path.push_back(cursor);
+            // END DEBUG INFO
         }
-
         char empty_or_split = lines.at(cursor.first + 1).at(cursor.second);
 
         if (empty_or_split == '^')
         {
-
+            // std::cout << "Split found\n";
             auto right = cursor;
             right.first += 2;
             ++right.second;
@@ -162,58 +166,27 @@ int main()
             left.first += 2;
             --left.second;
 
-            decisions.push_back(right);
-
-            cursor = left;
+            if (popped)
+            {
+                cursor = right;
+            }
+            else
+            {
+                decisions.push_back(cursor);
+                cursor = left;
+            }
         }
         else
         {
             cursor.first += 2;
         }
+        popped = false;
 
         path.push_back(cursor);
-
         lines.at(cursor.first).at(cursor.second)     = '|';
         lines.at(cursor.first - 1).at(cursor.second) = '|';
-        // do
-        // {
-        //     if ((cursor.first + 1) >= lines.size())
-        //     {
-        //         cout << "End reached" << endl;
-        //         // reached end
-        //         cursor = decisions.back();
-        //         decisions.pop_back();
-        //         popped = true;
-        //         result++;
-        //     }
-        //     char empty_or_split = lines.at(cursor.first + 1).at(cursor.second);
-        //     if (empty_or_split == '^')
-        //     {
-        //         // result++;
-        //         if (popped)
-        //         {
-        //             popped = false;
-        //             cursor.first += 2;
-        //             ++cursor.second;
-        //         }
-        //         else
-        //         {
-        //             decisions.push_back(cursor);
-        //             cursor.first += 2;
-        //             --cursor.second;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         cursor.first += 2;
-        //     }
-        //     lines.at(cursor.first).at(cursor.second)     = '|';
-        //     lines.at(cursor.first - 1).at(cursor.second) = '|';
-
-        int test = 0;
         for (auto line : lines)
         {
-            cout << test++ << "  ";
             cout << line << endl;
         }
         for (auto d : decisions)
@@ -222,48 +195,13 @@ int main()
             cout << " | ";
         }
         cout << endl;
-        cout << cursor.first << endl;
-        usleep(500 * 1000);
+        cout << "cursor.first: ";
+        cout << cursor.first;
+        cout << "  cursor.second: ";
+        cout << cursor.second << endl;
+        cout << result << endl;
+        usleep(5 * 1000);
     }
-    while (decisions.size() > 0)
-        ;
+
     cout << result << endl;
-
-    // Draw beams
-    // for (auto beamss : all_beams)
-    // {
-    //     for (auto beam : beamss)
-    //     {
-    //         lines.at(beam.first).at(beam.second)     = '|';
-    //         lines.at(beam.first - 1).at(beam.second) = '|';
-    //     }
-    // }
-    float test = 0;
-    // for (auto line : lines)
-    // {
-    //     test += 0.5;
-    //     cout << (int)test << "  ";
-    //     cout << line << endl;
-    // }
-    // int64_t result  = 0;
-    // bool last       = false;
-    // auto last_beams = all_beams.back();
-    // for (auto beamss : all_beams)
-    // {
-    // }
-    // for (size_t i = all_beams.size() - 1; i >= 0; --i)
-    // {
-    //     auto& beam_row = all_beams.at(i);
-    // }
-    // for (last_beam : last_beams)
-    // {
-    //     for (size_t i = all_beams.size() - 2; i >= 0; --i)
-    //     {
-    //
-    //         if (last_beam.second.at(i).second
-    //     }
-    // }
-
-    // cout << result << endl;
-    // cout << result << endl;
 }
