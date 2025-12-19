@@ -37,23 +37,51 @@ size_t getClosestPoint(const vector<Point>& points, size_t index)
 }
 
 void overwriteId(
-    size_t index_in,
-    size_t index_ow,
-    unordered_map<size_t, pair<size_t, set<size_t>>>& circuits)
+    size_t new_id,
+    size_t node,
+    unordered_map<size_t, pair<size_t, set<size_t>>>& circuits,
+    unordered_set<size_t>& visited)
 {
-    auto id      = circuits.find(index_in)->second.first;
-    auto find_ov = circuits.find(index_ow);
-
-    if (find_ov == circuits.end())
-    {
+    if (!visited.insert(node).second)
         return;
-    }
-    find_ov->second.first = index_in;
-    for (auto new_index_ow : find_ov->second.second)
+
+    auto it = circuits.find(node);
+    if (it == circuits.end())
+        return;
+
+    it->second.first = new_id;
+
+    for (auto nxt : it->second.second)
+        overwriteId(new_id, nxt, circuits, visited);
+}
+
+size_t circuitSizeFromMarking(
+    size_t start,
+    const unordered_map<size_t, pair<size_t, set<size_t>>>& circuits,
+    unordered_set<size_t>& globalVisited)
+{
+    vector<size_t> stack;
+    stack.push_back(start);
+    size_t count = 0;
+
+    while (!stack.empty())
     {
-        overwriteId(index_in, new_index_ow, circuits);
+        size_t node = stack.back();
+        stack.pop_back();
+
+        if (!globalVisited.insert(node).second)
+            continue;
+
+        ++count;
+
+        auto it = circuits.find(node);
+        if (it == circuits.end())
+            continue;
+
+        for (size_t nxt : it->second.second)
+            stack.push_back(nxt);
     }
-    return;
+    return count;
 }
 
 int main()
@@ -121,15 +149,26 @@ int main()
             }
             size_t closest_id = id_and_connected_closest->second.first;
             circuit_ids.erase(closest_id);
-            overwriteId(i, closest_id, circuits);
-            id_and_connected->second.second.insert(closest_id);
+
+            unordered_set<size_t> visited;
+            overwriteId(i_id, closest_p_index, circuits, visited);
+
+            id_and_connected->second.second.insert(closest_p_index);
+            id_and_connected_closest->second.second.insert(i);
         }
     }
-    vector<int> sizes;
-    for (auto c_id : circuit_ids)
-        sizes.push_back(circuits.find(c_id.second)->second.second.size());
 
-    sort(sizes.begin(), sizes.end());
-    for (auto size : sizes)
-        cout << size << endl;
+    vector<int> sizes;
+    unordered_set<size_t> globalVisited;
+
+    for (auto& [idx, _] : circuits)
+    {
+        if (globalVisited.count(idx))
+            continue;
+        sizes.push_back((int)circuitSizeFromMarking(idx, circuits, globalVisited));
+    }
+    sort(sizes.rbegin(), sizes.rend());
+    for (int s : sizes)
+        cout << s << "\n";
+    cout << "Result" << endl << sizes[0] * sizes[1] * sizes[2] << endl;
 }
